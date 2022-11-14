@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, delay, map, Observable, take, tap } from 'rxjs';
 import { FakeTodos } from './shared/consts/fake-todos';
 import { Todo } from './shared/interfaces/todo';
 
@@ -8,15 +8,14 @@ import { Todo } from './shared/interfaces/todo';
 })
 export class AppService {
 
-  /** Key for todos in localStorage. */
-  private readonly todosKey = 'todos';
-
   /**
    * Behaviour subject to watch, load, and save changes.
    * Loading and saving is handled by this service.
    * Components can watch and make changes to the list.
    */
   readonly todos: BehaviorSubject<Todo[]> = new BehaviorSubject<Todo[]>([]);
+  /** Key for todos in localStorage. */
+  private readonly todosKey = 'todos';
 
   constructor() {
     console.debug('AppService initiated.');
@@ -37,5 +36,19 @@ export class AppService {
         localStorage.setItem(this.todosKey, JSON.stringify(value));
       },
     });
+  }
+
+  public createTodo(todo: Todo): Observable<void> {
+    return this.todos.pipe(
+      take(1),
+      delay(2000),
+    ).pipe(
+      tap({
+        next: currentTodos => {
+          this.todos.next([...currentTodos, todo]);
+        },
+      }),
+      map(() => undefined),
+    );
   }
 }
